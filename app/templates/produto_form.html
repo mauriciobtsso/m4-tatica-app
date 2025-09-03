@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}{% if produto %}Editar Produto{% else %}Precificar Novo Produto{% endif %} - M4 Tática{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{% if produto %}Editar Produto{% else %}Precificar Novo Produto{% endif %}</h1>
+        <a href="{{ url_for('main.produtos') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle me-1"></i> Voltar para a Lista
+        </a>
+    </div>
+
+    <form method="POST">
+        <div class="card">
+            <div class="card-header">
+                Informações de Custo
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="codigo" class="form-label">SKU:</label>
+                        <input type="text" class="form-control" id="codigo" name="codigo" value="{{ produto.codigo if produto else '' }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="nome" class="form-label">Nome do Produto:</label>
+                        <input type="text" class="form-control" id="nome" name="nome" value="{{ produto.nome if produto else '' }}" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="valor_fornecedor_real" class="form-label">Valor Fornecedor (R$):</label>
+                        <input type="text" class="form-control currency" id="valor_fornecedor_real" name="valor_fornecedor_real" value="{{ produto.valor_fornecedor_real if produto else '' }}" inputmode="decimal" required>
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="desconto_fornecedor_percentual" class="form-label">Desconto (%):</label>
+                        <input type="text" class="form-control percentage" id="desconto_fornecedor_percentual" name="desconto_fornecedor_percentual" value="{{ produto.desconto_fornecedor_percentual if produto else '' }}" inputmode="decimal">
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="frete_real" class="form-label">Frete (R$):</label>
+                        <input type="text" class="form-control currency" id="frete_real" name="frete_real" value="{{ produto.frete_real if produto else '' }}" inputmode="decimal">
+                    </div>
+                     <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="ipi_valor" class="form-label">IPI (R$):</label>
+                        <input type="text" class="form-control currency" id="ipi_valor" name="ipi_valor" value="{{ produto.ipi_valor if produto else '' }}" inputmode="decimal">
+                    </div>
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <label for="difal_percentual" class="form-label">DIFAL (%):</label>
+                        <input type="text" class="form-control percentage" id="difal_percentual" name="difal_percentual" value="{{ produto.difal_percentual if produto else '' }}" inputmode="decimal">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                Método de Precificação
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="metodo_precificacao" id="margem" value="margem" checked>
+                        <label class="form-check-label" for="margem">Margem (%)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="metodo_precificacao" id="lucro_alvo" value="lucro_alvo">
+                        <label class="form-check-label" for="lucro_alvo">Lucro Alvo (R$)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="metodo_precificacao" id="preco_final" value="preco_final">
+                        <label class="form-check-label" for="preco_final">Preço Final (R$)</label>
+                    </div>
+                </div>
+                <div>
+                    <label for="valor_metodo" class="form-label">Valor do Método:</label>
+                    <input type="text" class="form-control" id="valor_metodo" name="valor_metodo" inputmode="decimal" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary btn-lg">Salvar Produto</button>
+        </div>
+    </form>
+
+    {% if produto and produto.preco_a_vista is not none and taxas_dict %}
+    <div class="card mt-4">
+        <div class="card-header">
+            Simulação de Parcelamento
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm" id="parcelamento-table">
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th class="text-end">Valor da Parcela (R$)</th>
+                            <th class="text-end">Total (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pix</td>
+                            <td class="text-end">R$ {{ "%.2f"|format(produto.preco_a_vista|float) }}</td>
+                            <td class="text-end">R$ {{ "%.2f"|format(produto.preco_a_vista|float) }}</td>
+                        </tr>
+                        {% if "Débito" in taxas_dict %}
+                        <tr>
+                            <td>Débito</td>
+                            <td class="text-end">R$ {{ "%.2f"|format((produto.preco_a_vista / taxas_dict["Débito"].coeficiente)|float) }}</td>
+                            <td class="text-end">R$ {{ "%.2f"|format((produto.preco_a_vista / taxas_dict["Débito"].coeficiente)|float) }}</td>
+                        </tr>
+                        {% endif %}
+                        {% for i in range(2, 13) %}
+                        {% set metodo = i ~ "x" %}
+                        {% if metodo in taxas_dict %}
+                        <tr>
+                            <td>{{ metodo }}</td>
+                            {% set preco_parcelado = produto.preco_a_vista / taxas_dict[metodo].coeficiente %}
+                            <td class="text-end">R$ {{ "%.2f"|format((preco_parcelado / i)|float) }}</td>
+                            <td class="text-end">R$ {{ "%.2f"|format(preco_parcelado|float) }}</td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+             <button onclick="copiarParaWhatsApp()" class="btn btn-success mt-3">
+                <i class="bi bi-whatsapp me-1"></i> Copiar para WhatsApp
+            </button>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {% if produto and produto.preco_a_vista is not none %}
+    <script>
+        // ... (código da função copiarParaWhatsApp)
+        function copiarParaWhatsApp() {
+            const produtoNome = "{{ produto.nome|escapejs }}";
+            const precoAVista = {{ produto.preco_a_vista|float }};
+            let whatsappText = `Simulação de Parcelamento\nM4 Tática\nProduto: ${produtoNome} Valor à Vista R$ ${precoAVista.toFixed(2).replace(".", ",")}\n\n`;
+            const table = document.getElementById("parcelamento-table");
+            for (let i = 1; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const metodo = row.cells[0].innerText;
+                const valorParcela = row.cells[1].innerText;
+                const total = row.cells[2].innerText;
+                if (metodo === "Pix") {
+                    whatsappText += `${metodo} ${total}\n`;
+                } else {
+                    whatsappText += `${metodo} ${valorParcela} = ${total}\n`;
+                }
+            }
+            whatsappText += `\nOs valores poderão sofrer alterações sem aviso prévio`;
+            navigator.clipboard.writeText(whatsappText).then(() => {
+                alert("Texto copiado para a área de transferência!");
+            }).catch(err => {
+                console.error("Erro ao copiar texto: ", err);
+            });
+        }
+    </script>
+    {% endif %}
+    <script src="https://unpkg.com/imask"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // ... (código das máscaras)
+            const currencyOptions = { mask: 'R$ num', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } } };
+            const percentageOptions = { mask: 'num %', blocks: { num: { mask: Number, scale: 2, radix: ',', mapToRadix: ['.'] } } };
+            document.querySelectorAll('.currency').forEach(el => { IMask(el, currencyOptions); });
+            document.querySelectorAll('.percentage').forEach(el => { IMask(el, percentageOptions); });
+            const valorMetodoInput = document.getElementById('valor_metodo');
+            let valorMetodoMask = IMask(valorMetodoInput, percentageOptions);
+            document.querySelectorAll('input[name="metodo_precificacao"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    valorMetodoMask.destroy();
+                    if (this.value === 'margem') {
+                        valorMetodoMask = IMask(valorMetodoInput, percentageOptions);
+                    } else {
+                        valorMetodoMask = IMask(valorMetodoInput, currencyOptions);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
