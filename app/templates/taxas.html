@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Taxas - M4 Tática{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Gerenciamento de Taxas</h1>
+        <a href="{{ url_for('main.gerenciar_taxa') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Adicionar Nova Taxa
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Método</th>
+                            <th scope="col" class="text-end">Taxa (%)</th>
+                            <th scope="col" class="text-end">Coeficiente</th>
+                            <th scope="col" class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for taxa in taxas %}
+                        <tr>
+                            <td>{{ taxa.metodo }}</td>
+                            <td class="text-end">{{ "%.2f"|format(taxa.taxa_percentual|float) }}%</td>
+                            <td class="text-end">{{ "%.4f"|format(taxa.coeficiente|float) }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('main.gerenciar_taxa', taxa_id=taxa.id) }}" class="btn btn-secondary btn-sm" title="Editar">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <a href="{{ url_for('main.excluir_taxa', taxa_id=taxa.id) }}" 
+                                   class="btn btn-danger btn-sm" title="Excluir"
+                                   onclick="return confirm('Tem certeza que deseja excluir a taxa \'{{ taxa.metodo }}\'?');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">Nenhuma taxa cadastrada ainda.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
