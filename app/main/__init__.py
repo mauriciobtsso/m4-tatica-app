@@ -2,5 +2,6 @@ from flask import Blueprint
 
 main = Blueprint('main', __name__)
 
-# Importamos as rotas no final para evitar importações circulares
-from . import routes, models
+# A linha "from . import models" foi removida daqui.
+# Este arquivo só precisa importar as rotas do seu próprio módulo.
+from . import routes
