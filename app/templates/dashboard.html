@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - M4 Tática{% endblock %}
+
+{% block content %}
+    <h1 class="h2 mb-4">Dashboard</h1>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card text-center h-100">
+                <div class="card-header">
+                    Margem de Lucro Média
+                </div>
+                <div class="card-body">
+                    <h3 class="card-title display-4">{{ "%.1f"|format(media_margem_lucro|float) }}%</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card text-center h-100">
+                <div class="card-header">
+                    Produto Mais Lucrativo
+                </div>
+                <div class="card-body">
+                    {% if produto_mais_lucrativo %}
+                        <h5 class="card-title">{{ produto_mais_lucrativo.nome }}</h5>
+                        <p class="card-text fs-4">
+                            Lucro de R$ {{ "%.2f"|format(produto_mais_lucrativo.lucro_liquido_real|float) }}
+                        </p>
+                    {% else %}
+                        <p class="card-text text-muted">Nenhum produto precificado ainda.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
