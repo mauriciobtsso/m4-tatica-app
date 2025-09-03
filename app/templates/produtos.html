@@ -18,9 +18,9 @@
                         <tr>
                             <th scope="col">SKU</th>
                             <th scope="col">Nome do Produto</th>
-                            <th scope="col" class="text-end">Custo Total (R$)</th>
-                            <th scope="col" class="text-end">Preço à Vista (R$)</th>
-                            <th scope="col" class="text-end">Lucro Líquido (R$)</th>
+                            <th scope="col" class="text-end">Custo Total</th>
+                            <th scope="col" class="text-end">Preço à Vista</th>
+                            <th scope="col" class="text-end">Lucro Líquido</th>
                             <th scope="col" class="text-center">Ações</th>
                         </tr>
                     </thead>
@@ -29,9 +29,27 @@
                         <tr>
                             <td>{{ produto.codigo }}</td>
                             <td>{{ produto.nome }}</td>
-                            <td class="text-end">{{ "%.2f"|format(produto.custo_total|float) if produto.custo_total is not none else 'N/A' }}</td>
-                            <td class="text-end">{{ "%.2f"|format(produto.preco_a_vista|float) if produto.preco_a_vista is not none else 'N/A' }}</td>
-                            <td class="text-end">{{ "%.2f"|format(produto.lucro_liquido_real|float) if produto.lucro_liquido_real is not none else 'N/A' }}</td>
+                            <td class="text-end">
+                                {% if produto.custo_total is not none %}
+                                    R$ {{ ("%.2f"|format(produto.custo_total|float)).replace('.', ',') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if produto.preco_a_vista is not none %}
+                                    R$ {{ ("%.2f"|format(produto.preco_a_vista|float)).replace('.', ',') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="text-end {% if produto.lucro_liquido_real is not none and produto.lucro_liquido_real < 0 %}text-danger{% endif %}">
+                                {% if produto.lucro_liquido_real is not none %}
+                                    R$ {{ ("%.2f"|format(produto.lucro_liquido_real|float)).replace('.', ',') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
                             <td class="text-center">
                                 <a href="{{ url_for('main.gerenciar_produto', produto_id=produto.id) }}" class="btn btn-secondary btn-sm" title="Editar">
                                     <i class="bi bi-pencil-square"></i>
