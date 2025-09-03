@@ -136,9 +136,9 @@
 {% block scripts %}
     {% if produto and produto.preco_a_vista is not none %}
     <script>
-        // ... (código da função copiarParaWhatsApp)
         function copiarParaWhatsApp() {
-            const produtoNome = "{{ produto.nome|escapejs }}";
+            // AQUI ESTÁ A CORREÇÃO: trocamos |escapejs por |tojson
+            const produtoNome = {{ produto.nome|tojson }};
             const precoAVista = {{ produto.preco_a_vista|float }};
             let whatsappText = `Simulação de Parcelamento\nM4 Tática\nProduto: ${produtoNome} Valor à Vista R$ ${precoAVista.toFixed(2).replace(".", ",")}\n\n`;
             const table = document.getElementById("parcelamento-table");
@@ -165,7 +165,6 @@
     <script src="https://unpkg.com/imask"></script>
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
-            // ... (código das máscaras)
             const currencyOptions = { mask: 'R$ num', blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: true, radix: ',', mapToRadix: ['.'] } } };
             const percentageOptions = { mask: 'num %', blocks: { num: { mask: Number, scale: 2, radix: ',', mapToRadix: ['.'] } } };
             document.querySelectorAll('.currency').forEach(el => { IMask(el, currencyOptions); });
