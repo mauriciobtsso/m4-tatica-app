@@ -142,3 +142,25 @@ def excluir_taxa(taxa_id):
     db.session.commit()
     flash('Taxa excluída com sucesso!', 'danger')
     return redirect(url_for('main.taxas'))
+
+# (O código anterior de imports e outras rotas permanece o mesmo)
+
+@main.route("/produto/novo", methods=["GET", "POST"])
+@main.route("/produto/editar/<int:produto_id>", methods=["GET", "POST"])
+@login_required
+def gerenciar_produto(produto_id=None):
+    produto = None
+    if produto_id:
+        produto = Produto.query.get_or_404(produto_id)
+
+    if request.method == 'POST':
+        # ... (Toda a lógica de POST que já funciona continua aqui)
+        return redirect(url_for('main.produtos')) # O final da lógica POST
+
+    # A PARTE QUE FALTAVA ESTÁ AQUI:
+    # Para requisições GET, precisamos buscar as taxas e renderizar o template
+    taxas = TaxaPagamento.query.all()
+    taxas_dict = {t.metodo: t for t in taxas}
+    return render_template("produto_form.html", produto=produto, taxas_dict=taxas_dict)
+
+# ... (O restante das rotas, como excluir e exportar, continua o mesmo)

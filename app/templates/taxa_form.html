@@ -3,13 +3,6 @@
 {% block title %}{% if taxa %}Editar Taxa{% else %}Adicionar Nova Taxa{% endif %} - M4 Tática{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2">{% if taxa %}Editar Taxa{% else %}Adicionar Nova Taxa{% endif %}</h1>
-        <a href="{{ url_for('main.taxas') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left-circle me-1"></i> Voltar para a Lista
-        </a>
-    </div>
-
     <div class="card">
         <div class="card-body">
             <form method="POST">
@@ -17,17 +10,14 @@
                     <div class="col-md-4 mb-3">
                         <label for="metodo" class="form-label">Método de Pagamento</label>
                         <input type="text" class="form-control" id="metodo" name="metodo" value="{{ taxa.metodo if taxa else '' }}" required>
-                        <div class="form-text">Ex: Pix, Débito, 1x, 2x, etc.</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="taxa_percentual" class="form-label">Taxa (%)</label>
                         <input type="text" class="form-control" id="taxa_percentual" name="taxa_percentual" value="{{ taxa.taxa_percentual if taxa else '' }}" inputmode="decimal" required>
-                         <div class="form-text">Use ponto ou vírgula como separador. Ex: 4.99</div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="coeficiente" class="form-label">Coeficiente</label>
-                        <input type="text" class="form-control" id="coeficiente" name="coeficiente" value="{{ taxa.coeficiente if taxa else '' }}" inputmode="decimal" required>
-                        <div class="form-text">Use ponto ou vírgula como separador. Ex: 0.9501</div>
+                        <label for="coeficiente" class="form-label">Coeficiente (Calculado)</label>
+                        <input type="text" class="form-control" id="coeficiente" name="coeficiente" value="{{ taxa.coeficiente if taxa else '' }}" readonly>
                     </div>
                 </div>
                 <hr>
@@ -35,4 +25,34 @@
             </form>
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const taxaInput = document.getElementById('taxa_percentual');
+        const coeficienteInput = document.getElementById('coeficiente');
+
+        function calcularCoeficiente() {
+            // Pega o valor, troca vírgula por ponto
+            let taxaValor = taxaInput.value.replace(',', '.');
+            // Converte para número, ou 0 se for inválido
+            let taxa = parseFloat(taxaValor) || 0;
+
+            if (taxa >= 0 && taxa < 100) {
+                let coeficiente = 1 - (taxa / 100);
+                // Formata com 4 casas decimais
+                coeficienteInput.value = coeficiente.toFixed(4);
+            } else {
+                coeficienteInput.value = '';
+            }
+        }
+
+        // Calcula o coeficiente sempre que o usuário digitar a taxa
+        taxaInput.addEventListener('input', calcularCoeficiente);
+
+        // Calcula uma vez ao carregar a página, caso seja uma edição
+        calcularCoeficiente();
+    });
+</script>
 {% endblock %}
