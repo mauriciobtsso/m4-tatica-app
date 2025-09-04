@@ -54,11 +54,11 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Tipo de IPI:</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_fixo" value="fixo" checked>
+                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_fixo" value="fixo" {% if not produto or produto.ipi_tipo == 'fixo' %}checked{% endif %}>
                                     <label class="form-check-label" for="ipi_fixo">Valor Fixo (R$)</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_percentual" value="percentual">
+                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_percentual" value="percentual" {% if produto and produto.ipi_tipo == 'percentual' %}checked{% endif %}>
                                     <label class="form-check-label" for="ipi_percentual">Percentual Embutido (%)</label>
                                 </div>
                             </div>
@@ -80,21 +80,21 @@
                         <div class="mb-3">
                             <label class="form-label">Método de Precificação:</label><br>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="margem" value="margem" checked>
+                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="margem" value="margem" {% if not produto or produto.metodo_precificacao == 'margem' %}checked{% endif %}>
                                 <label class="form-check-label" for="margem">Margem (%)</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="lucro_alvo" value="lucro_alvo">
+                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="lucro_alvo" value="lucro_alvo" {% if produto and produto.metodo_precificacao == 'lucro_alvo' %}checked{% endif %}>
                                 <label class="form-check-label" for="lucro_alvo">Lucro Alvo (R$)</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="preco_final" value="preco_final">
+                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="preco_final" value="preco_final" {% if produto and produto.metodo_precificacao == 'preco_final' %}checked{% endif %}>
                                 <label class="form-check-label" for="preco_final">Preço Final (R$)</label>
                             </div>
                         </div>
                         <div>
                             <label for="valor_metodo" class="form-label">Valor do Método:</label>
-                            <input type="text" class="form-control" id="valor_metodo" name="valor_metodo" inputmode="decimal" required>
+                            <input type="text" class="form-control" id="valor_metodo" name="valor_metodo" value="{{ produto.valor_metodo if produto else '' }}" inputmode="decimal" required>
                         </div>
                     </div>
                 </div>
@@ -297,57 +297,79 @@
         }
 
         function calcularPreco() {
+            console.log('Iniciando cálculo...'); // Debug
+            
             const unmask = (id) => {
                 const mask = allMasks[id];
-                if (mask && mask.unmaskedValue) {
-                    return parseFloat(mask.unmaskedValue);
+                if (mask && mask.unmaskedValue !== undefined) {
+                    const value = parseFloat(mask.unmaskedValue);
+                    console.log(`${id}: ${mask.unmaskedValue} -> ${value}`); // Debug
+                    return value;
                 }
                 const element = document.getElementById(id);
-                return parseFloat(element.value.replace(',', '.')) || 0;
+                const rawValue = element.value.replace(',', '.').replace('R$', '').replace('%', '').trim();
+                const value = parseFloat(rawValue) || 0;
+                console.log(`${id} (fallback): ${element.value} -> ${rawValue} -> ${value}`); // Debug
+                return value;
             };
 
-            const valorFornecedor = unmask('valor_fornecedor_real');
-            const desconto = unmask('desconto_fornecedor_percentual');
-            const frete = unmask('frete_real');
-            const difal = unmask('difal_percentual');
-            const ipiTipo = document.querySelector('input[name="ipi_tipo"]:checked').value;
-            const ipiValorForm = unmask('ipi_valor');
-            const impostoVenda = unmask('imposto_venda_percentual');
-            const metodoPrecificacao = document.querySelector('input[name="metodo_precificacao"]:checked').value;
-            const valorMetodo = unmask('valor_metodo');
+            try {
+                const valorFornecedor = unmask('valor_fornecedor_real');
+                const desconto = unmask('desconto_fornecedor_percentual');
+                const frete = unmask('frete_real');
+                const difal = unmask('difal_percentual');
+                const ipiTipo = document.querySelector('input[name="ipi_tipo"]:checked').value;
+                const ipiValorForm = unmask('ipi_valor');
+                const impostoVenda = unmask('imposto_venda_percentual');
+                const metodoPrecificacao = document.querySelector('input[name="metodo_precificacao"]:checked').value;
+                const valorMetodo = unmask('valor_metodo');
 
-            const valorCompraDesconto = valorFornecedor * (1 - (desconto / 100));
-            
-            let valorIpi = 0;
-            if (ipiTipo === 'percentual' && ipiValorForm > 0) {
-                valorIpi = valorCompraDesconto - (valorCompraDesconto / (1 + (ipiValorForm / 100)));
-            } else {
-                valorIpi = ipiValorForm;
+                console.log('Valores extraídos:', {
+                    valorFornecedor, desconto, frete, difal, ipiTipo, ipiValorForm, 
+                    impostoVenda, metodoPrecificacao, valorMetodo
+                }); // Debug
+
+                const valorCompraDesconto = valorFornecedor * (1 - (desconto / 100));
+                
+                let valorIpi = 0;
+                if (ipiTipo === 'percentual' && ipiValorForm > 0) {
+                    valorIpi = valorCompraDesconto - (valorCompraDesconto / (1 + (ipiValorForm / 100)));
+                } else {
+                    valorIpi = ipiValorForm;
+                }
+
+                const baseCalculoDifal = (valorCompraDesconto - valorIpi) + frete;
+                const valorDifal = baseCalculoDifal * (difal / 100);
+                
+                const custoTotal = valorCompraDesconto + frete + valorDifal;
+
+                let precoVenda = 0;
+                if (metodoPrecificacao === 'margem') {
+                    const denominador = (1 - (impostoVenda / 100) - (valorMetodo / 100));
+                    if (denominador > 0) precoVenda = custoTotal / denominador;
+                } else if (metodoPrecificacao === 'lucro_alvo') {
+                    const denominador = (1 - (impostoVenda / 100));
+                    if (denominador > 0) precoVenda = (custoTotal + valorMetodo) / denominador;
+                } else if (metodoPrecificacao === 'preco_final') {
+                    precoVenda = valorMetodo;
+                }
+
+                const valorImpostoVenda = precoVenda * (impostoVenda / 100);
+                const lucroLiquido = precoVenda - custoTotal - valorImpostoVenda;
+                
+                console.log('Resultados calculados:', {
+                    custoTotal, valorImpostoVenda, precoVenda, lucroLiquido
+                }); // Debug
+                
+                document.getElementById('resultado_custo_total').innerText = formatCurrency(custoTotal);
+                document.getElementById('resultado_imposto_venda').innerText = formatCurrency(valorImpostoVenda);
+                document.getElementById('resultado_preco_venda').innerText = formatCurrency(precoVenda);
+                document.getElementById('resultado_lucro_liquido').innerText = formatCurrency(lucroLiquido);
+                
+                console.log('Cálculo concluído com sucesso'); // Debug
+            } catch (error) {
+                console.error('Erro no cálculo:', error); // Debug
             }
-
-            const baseCalculoDifal = (valorCompraDesconto - valorIpi) + frete;
-            const valorDifal = baseCalculoDifal * (difal / 100);
-            
-            const custoTotal = valorCompraDesconto + frete + valorDifal;
-
-            let precoVenda = 0;
-            if (metodoPrecificacao === 'margem') {
-                const denominador = (1 - (impostoVenda / 100) - (valorMetodo / 100));
-                if (denominador > 0) precoVenda = custoTotal / denominador;
-            } else if (metodoPrecificacao === 'lucro_alvo') {
-                const denominador = (1 - (impostoVenda / 100));
-                if (denominador > 0) precoVenda = (custoTotal + valorMetodo) / denominador;
-            } else if (metodoPrecificacao === 'preco_final') {
-                precoVenda = valorMetodo;
-            }
-
-            const valorImpostoVenda = precoVenda * (impostoVenda / 100);
-            const lucroLiquido = precoVenda - custoTotal - valorImpostoVenda;
-            
-            document.getElementById('resultado_custo_total').innerText = formatCurrency(custoTotal);
-            document.getElementById('resultado_imposto_venda').innerText = formatCurrency(valorImpostoVenda);
-            document.getElementById('resultado_preco_venda').innerText = formatCurrency(precoVenda);
-            document.getElementById('resultado_lucro_liquido').innerText = formatCurrency(lucroLiquido);
         }
     </script>
 {% endblock %}
