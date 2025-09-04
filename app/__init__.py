@@ -12,18 +12,15 @@ login_manager.login_view = 'main.login'
 login_manager.login_message = "Por favor, faça o login para acessar esta página."
 login_manager.login_message_category = "info"
 
-# Função para formatar valores como moeda brasileira
 def format_currency(value):
     if value is None:
         return "N/A"
-    # Formata com 2 casas decimais e separador de milhar, depois inverte . e ,
     formatted_value = f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     return f"R$ {formatted_value}"
 
 def create_app():
     app = Flask(__name__)
 
-    # ... (o resto das configurações continua igual)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'uma-chave-secreta-de-fallback-muito-segura')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -35,10 +32,10 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Registra nosso filtro de moeda customizado no ambiente do Jinja2
     app.jinja_env.filters['currency'] = format_currency
 
-    from .main.routes import main as main_blueprint
+    # AQUI ESTÁ A CORREÇÃO: Importamos o 'main' do pacote app.main
+    from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
     
     with app.app_context():
