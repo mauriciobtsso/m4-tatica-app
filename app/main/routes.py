@@ -168,7 +168,20 @@ def excluir_produto(produto_id):
 @login_required
 def exportar_produtos_csv():
     produtos = Produto.query.all()
-    # ... (código completo de exportar)
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(["SKU", "Nome do Produto", "Custo Total (R$)", "Preço à Vista (R$)", "Lucro Líquido (R$)"])
+    for produto in produtos:
+        cw.writerow([
+            produto.codigo, produto.nome,
+            "%.2f" % produto.custo_total if produto.custo_total is not None else "N/A",
+            "%.2f" % produto.preco_a_vista if produto.preco_a_vista is not None else "N/A",
+            "%.2f" % produto.lucro_liquido_real if produto.lucro_liquido_real is not None else "N/A"
+        ])
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = "attachment; filename=produtos.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 # --- ROTAS DE TAXAS ---
 
@@ -182,9 +195,48 @@ def taxas():
 @main.route('/taxa/editar/<int:taxa_id>', methods=['GET', 'POST'])
 @login_required
 def gerenciar_taxa(taxa_id=None):
-    # ... (código completo de gerenciar_taxa)
+    taxa = None
+    if taxa_id:
+        taxa = TaxaPagamento.query.get_or_404(taxa_id)
+            
+    if request.method == 'POST':
+        def to_float(value):
+            if not value: return 0.0
+            cleaned_value = str(value).replace(',', '.').strip()
+            if not cleaned_value: return 0.0
+            return float(cleaned_value)
+
+        metodo = request.form.get('metodo')
+        taxa_percentual = to_float(request.form.get('taxa_percentual'))
+        
+        coeficiente = 0.0
+        if taxa_percentual >= 0 and taxa_percentual < 100:
+            coeficiente = 1 - (taxa_percentual / 100)
+
+        if taxa_id:
+            taxa.metodo = metodo
+            taxa.taxa_percentual = taxa_percentual
+            taxa.coeficiente = coeficiente
+            flash('Taxa atualizada com sucesso!', 'success')
+        else:
+            nova_taxa = TaxaPagamento(
+                metodo=metodo,
+                taxa_percentual=taxa_percentual,
+                coeficiente=coeficiente
+            )
+            db.session.add(nova_taxa)
+            flash('Taxa adicionada com sucesso!', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('main.taxas'))
+
+    return render_template('taxa_form.html', taxa=taxa)
 
 @main.route('/taxa/excluir/<int:taxa_id>')
 @login_required
 def excluir_taxa(taxa_id):
-    # ... (código completo de excluir_taxa)
+    taxa_para_excluir = TaxaPagamento.query.get_or_404(taxa_id)
+    db.session.delete(taxa_para_excluir)
+    db.session.commit()
+    flash('Taxa excluída com sucesso!', 'danger')
+    return redirect(url_for('main.taxas'))
