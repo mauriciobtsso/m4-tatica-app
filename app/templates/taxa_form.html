@@ -1,14 +1,16 @@
 {% extends 'base.html' %}
-
-{% block title %}{% if taxa %}Editar Taxa{% else %}Adicionar Nova Taxa{% endif %} - M4 Tática{% endblock %}
-
+{% block title %}{% if taxa %}Editar Taxa{% else %}Adicionar Nova Taxa{% endif %}{% endblock %}
 {% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{% if taxa %}Editar Taxa{% else %}Adicionar Nova Taxa{% endif %}</h1>
+        <a href="{{ url_for('main.taxas') }}" class="btn btn-secondary"><i class="bi bi-arrow-left-circle me-1"></i> Voltar</a>
+    </div>
     <div class="card">
         <div class="card-body">
             <form method="POST">
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="metodo" class="form-label">Método de Pagamento</label>
+                        <label for="metodo" class="form-label">Método</label>
                         <input type="text" class="form-control" id="metodo" name="metodo" value="{{ taxa.metodo if taxa else '' }}" required>
                     </div>
                     <div class="col-md-4 mb-3">
@@ -28,31 +30,28 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://unpkg.com/imask"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const percentageMask = IMask(document.getElementById('taxa_percentual'), {
+            mask: 'num %',
+            blocks: { num: { mask: Number, scale: 2, thousandsSeparator: '.', padFractionalZeros: false, radix: ',', mapToRadix: ['.'] } }
+        });
+
         const taxaInput = document.getElementById('taxa_percentual');
         const coeficienteInput = document.getElementById('coeficiente');
 
         function calcularCoeficiente() {
-            // Pega o valor, troca vírgula por ponto
-            let taxaValor = taxaInput.value.replace(',', '.');
-            // Converte para número, ou 0 se for inválido
-            let taxa = parseFloat(taxaValor) || 0;
-
+            let taxa = percentageMask.unmaskedValue ? parseFloat(percentageMask.unmaskedValue) : 0;
             if (taxa >= 0 && taxa < 100) {
                 let coeficiente = 1 - (taxa / 100);
-                // Formata com 4 casas decimais
-                coeficienteInput.value = coeficiente.toFixed(4);
+                coeficienteInput.value = coeficiente.toFixed(4).replace('.', ',');
             } else {
                 coeficienteInput.value = '';
             }
         }
-
-        // Calcula o coeficiente sempre que o usuário digitar a taxa
         taxaInput.addEventListener('input', calcularCoeficiente);
-
-        // Calcula uma vez ao carregar a página, caso seja uma edição
-        calcularCoeficiente();
+        calcularCoeficiente(); // Calcula ao carregar a página
     });
 </script>
 {% endblock %}

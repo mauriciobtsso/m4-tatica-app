@@ -1,10 +1,8 @@
 from . import db, login_manager
 from flask_login import UserMixin
 
-# O decorador @login_manager.user_loader conecta o Flask-Login com nosso modelo de usuário
 @login_manager.user_loader
 def load_user(user_id):
-    # Como temos um usuário fixo, retornamos o objeto User se o ID for '1'
     return User.query.get(int(user_id))
 
 class Produto(db.Model):
@@ -14,8 +12,19 @@ class Produto(db.Model):
     valor_fornecedor_real = db.Column(db.Float, nullable=False)
     desconto_fornecedor_percentual = db.Column(db.Float, default=0.0)
     frete_real = db.Column(db.Float, default=0.0)
+    
+    # Campos IPI melhorados
     ipi_valor = db.Column(db.Float, default=0.0)
+    ipi_tipo = db.Column(db.String(20), default='fixo') # 'fixo' ou 'percentual'
+
     difal_percentual = db.Column(db.Float, default=0.0)
+    
+    # Novos campos para salvar o estado da precificação
+    imposto_venda_percentual = db.Column(db.Float, default=0.0)
+    metodo_precificacao = db.Column(db.String(20), default='margem')
+    valor_metodo = db.Column(db.Float, default=0.0)
+    
+    # Campos de resultado
     custo_total = db.Column(db.Float, nullable=True)
     preco_a_vista = db.Column(db.Float, nullable=True)
     lucro_liquido_real = db.Column(db.Float, nullable=True)
@@ -32,12 +41,9 @@ class TaxaPagamento(db.Model):
     def __repr__(self):
         return f'<TaxaPagamento {self.metodo}>'
 
-# Embora nosso usuário seja fixo por enquanto, criar um modelo ajuda na estrutura
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, index=True)
-    # Em um app real, a senha seria um hash, não texto puro
-    # password_hash = db.Column(db.String(128))
 
     def __repr__(self):
         return f'<User {self.username}>'
