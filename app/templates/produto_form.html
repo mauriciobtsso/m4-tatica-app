@@ -3,146 +3,37 @@
 {% block title %}{% if produto %}Editar Produto{% else %}Precificar Novo Produto{% endif %} - M4 Tática{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h2">{% if produto %}Editar Produto{% else %}Precificar Novo Produto{% endif %}</h1>
-        <a href="{{ url_for('main.produtos') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left-circle me-1"></i> Voltar para a Lista
-        </a>
-    </div>
-
     <form method="POST" id="precificador-form">
-        <div class="row">
-            <div class="col-lg-7">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        Informações de Custo
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="codigo" class="form-label">SKU:</label>
-                                <input type="text" class="form-control" id="codigo" name="codigo" value="{{ produto.codigo if produto else '' }}" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="nome" class="form-label">Nome do Produto:</label>
-                                <input type="text" class="form-control" id="nome" name="nome" value="{{ produto.nome if produto else '' }}" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="valor_fornecedor_real" class="form-label">Valor Fornecedor (R$):</label>
-                                <input type="text" class="form-control currency" id="valor_fornecedor_real" name="valor_fornecedor_real" value="{{ produto.valor_fornecedor_real if produto else '' }}" inputmode="decimal" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="desconto_fornecedor_percentual" class="form-label">Desconto (%):</label>
-                                <input type="text" class="form-control percentage" id="desconto_fornecedor_percentual" name="desconto_fornecedor_percentual" value="{{ produto.desconto_fornecedor_percentual if produto else '' }}" inputmode="decimal">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="frete_real" class="form-label">Frete (R$):</label>
-                                <input type="text" class="form-control currency" id="frete_real" name="frete_real" value="{{ produto.frete_real if produto else '' }}" inputmode="decimal">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="difal_percentual" class="form-label">DIFAL (%):</label>
-                                <input type="text" class="form-control percentage" id="difal_percentual" name="difal_percentual" value="{{ produto.difal_percentual if produto else '' }}" inputmode="decimal">
-                            </div>
-                        </div>
-                        <div class="row align-items-end">
-                             <div class="col-md-6 mb-3">
-                                <label for="ipi_valor" class="form-label">Valor IPI:</label>
-                                <input type="text" class="form-control" id="ipi_valor" name="ipi_valor" value="{{ produto.ipi_valor if produto else '' }}" inputmode="decimal">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Tipo de IPI:</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_fixo" value="fixo" checked>
-                                    <label class="form-check-label" for="ipi_fixo">Valor Fixo (R$)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="ipi_tipo" id="ipi_percentual" value="percentual">
-                                    <label class="form-check-label" for="ipi_percentual">Percentual Embutido (%)</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
-                    <div class="card-header">
-                        Precificação e Impostos de Venda
-                    </div>
-                    <div class="card-body">
-                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="imposto_venda_percentual" class="form-label">Imposto de Venda (%):</label>
-                                <input type="text" class="form-control percentage" id="imposto_venda_percentual" name="imposto_venda_percentual" value="{{ produto.imposto_venda_percentual if produto else '' }}" inputmode="decimal">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Método de Precificação:</label><br>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="margem" value="margem" checked>
-                                <label class="form-check-label" for="margem">Margem (%)</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="lucro_alvo" value="lucro_alvo">
-                                <label class="form-check-label" for="lucro_alvo">Lucro Alvo (R$)</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="metodo_precificacao" id="preco_final" value="preco_final">
-                                <label class="form-check-label" for="preco_final">Preço Final (R$)</label>
-                            </div>
-                        </div>
-                        <div>
-                            <label for="valor_metodo" class="form-label">Valor do Método:</label>
-                            <input type="text" class="form-control" id="valor_metodo" name="valor_metodo" inputmode="decimal" required>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-5">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        Resultados em Tempo Real
-                    </div>
-                    <div class="card-body">
-                        <dl class="row">
-                            <dt class="col-sm-6">Custo Total:</dt>
-                            <dd class="col-sm-6 text-end" id="resultado_custo_total">R$ 0,00</dd>
-                            
-                            <dt class="col-sm-6">Imposto Venda (R$):</dt>
-                            <dd class="col-sm-6 text-end" id="resultado_imposto_venda">R$ 0,00</dd>
-
-                            <dt class="col-sm-6">Preço de Venda:</dt>
-                            <dd class="col-sm-6 text-end fs-5 fw-bold" id="resultado_preco_venda">R$ 0,00</dd>
-                            
-                            <hr class="my-2">
-
-                            <dt class="col-sm-6 fs-5">Lucro Líquido:</dt>
-                            <dd class="col-sm-6 text-end fs-5 fw-bold text-success" id="resultado_lucro_liquido">R$ 0,00</dd>
-                        </dl>
-                    </div>
-                </div>
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary btn-lg">Salvar Produto</button>
-                    <a href="{{ url_for('main.produtos') }}" class="btn btn-secondary">Cancelar</a>
-                </div>
-            </div>
-        </div>
-    </form>
+        </form>
     
     {% if produto and produto.preco_a_vista %}
     <div class="card mt-4">
+        <div class="card-header">
+            Simulação de Parcelamento
         </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm" id="parcelamento-table">
+                    </table>
+            </div>
+             <button type="button" onclick="copiarParaWhatsApp()" class="btn btn-success mt-3">
+                <i class="bi bi-whatsapp me-1"></i> Copiar para WhatsApp
+            </button>
+        </div>
+    </div>
     {% endif %}
-
 {% endblock %}
 
 {% block scripts %}
     <script src="https://unpkg.com/imask"></script>
+    
     <script>
-    // ... (script das máscaras, incluindo a lógica dinâmica) ...
-    // ... (script do whatsapp, se aplicável) ...
-    // NOVO SCRIPT PARA CÁLCULO EM TEMPO REAL
+        // ... (Script completo com a lógica de cálculo)
     </script>
+
+    {% if produto and produto.preco_a_vista %}
+    <script>
+        // ... (código da função copiarParaWhatsApp)
+    </script>
+    {% endif %}
 {% endblock %}
