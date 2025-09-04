@@ -74,7 +74,7 @@
                          <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="imposto_venda_percentual" class="form-label">Imposto de Venda (%):</label>
-                                <input type="text" class="form-control percentage" id="imposto_venda_percentual" name="imposto_venda_percentual" value="0.0" inputmode="decimal">
+                                <input type="text" class="form-control percentage" id="imposto_venda_percentual" name="imposto_venda_percentual" value="{{ produto.imposto_venda_percentual if produto else '0.0' }}" inputmode="decimal">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -218,9 +218,31 @@
                 { id: 'valor_metodo', options: {} } // Máscara dinâmica
             ];
 
+            // Função para formatar valores existentes antes de aplicar a máscara
+            function formatExistingValue(element, maskType) {
+                const currentValue = element.value;
+                if (!currentValue || currentValue === '' || currentValue === '0.0') return;
+                
+                const numericValue = parseFloat(currentValue.replace(',', '.'));
+                if (isNaN(numericValue)) return;
+                
+                if (maskType === 'currency') {
+                    element.value = numericValue.toFixed(2).replace('.', ',');
+                } else if (maskType === 'percentage') {
+                    element.value = numericValue.toFixed(2).replace('.', ',');
+                }
+            }
+
             inputsToMask.forEach(item => {
                 const element = document.getElementById(item.id);
                 if (element) {
+                    // Formatar valores existentes antes de aplicar a máscara
+                    if (item.options === currencyOptions) {
+                        formatExistingValue(element, 'currency');
+                    } else if (item.options === percentageOptions) {
+                        formatExistingValue(element, 'percentage');
+                    }
+                    
                     allMasks[item.id] = IMask(element, item.options);
                 }
             });
@@ -230,19 +252,26 @@
                 const metodoPrecificacao = document.querySelector('input[name="metodo_precificacao"]:checked').value;
 
                 if (allMasks['ipi_valor']) allMasks['ipi_valor'].destroy();
+                const ipiElement = document.getElementById('ipi_valor');
                 if (ipiTipo === 'percentual') {
-                    allMasks['ipi_valor'] = IMask(document.getElementById('ipi_valor'), percentageOptions);
+                    formatExistingValue(ipiElement, 'percentage');
+                    allMasks['ipi_valor'] = IMask(ipiElement, percentageOptions);
                 } else {
-                    allMasks['ipi_valor'] = IMask(document.getElementById('ipi_valor'), currencyOptions);
+                    formatExistingValue(ipiElement, 'currency');
+                    allMasks['ipi_valor'] = IMask(ipiElement, currencyOptions);
                 }
 
                 if (allMasks['valor_metodo']) allMasks['valor_metodo'].destroy();
+                const metodoElement = document.getElementById('valor_metodo');
                 if (metodoPrecificacao === 'margem') {
-                    allMasks['valor_metodo'] = IMask(document.getElementById('valor_metodo'), percentageOptions);
+                    formatExistingValue(metodoElement, 'percentage');
+                    allMasks['valor_metodo'] = IMask(metodoElement, percentageOptions);
                 } else {
-                    allMasks['valor_metodo'] = IMask(document.getElementById('valor_metodo'), currencyOptions);
+                    formatExistingValue(metodoElement, 'currency');
+                    allMasks['valor_metodo'] = IMask(metodoElement, currencyOptions);
                 }
             }
+            
             document.querySelectorAll('input[name="ipi_tipo"], input[name="metodo_precificacao"]').forEach(radio => {
                 radio.addEventListener('change', () => {
                     updateDynamicMasks();
@@ -254,10 +283,13 @@
             const form = document.getElementById('precificador-form');
             form.addEventListener('input', calcularPreco);
             
-            // Calcula o preço inicial ao carregar a página se for uma edição
-            if ({{ produto is not none|tojson }}) {
-                calcularPreco();
-            }
+            // Aguardar um pouco para garantir que as máscaras estejam totalmente inicializadas
+            setTimeout(() => {
+                // Calcula o preço inicial ao carregar a página se for uma edição
+                if ({{ produto is not none|tojson }}) {
+                    calcularPreco();
+                }
+            }, 100);
         });
 
         function formatCurrency(value) {
