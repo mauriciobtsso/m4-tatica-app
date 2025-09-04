@@ -1,3 +1,4 @@
+# (Conteúdo completo e corrigido do routes.py)
 from flask import render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required, login_user, logout_user, current_user
 from . import main
@@ -7,7 +8,6 @@ import io
 import csv
 
 # --- ROTAS DE AUTENTICAÇÃO E DASHBOARD ---
-
 @main.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -61,7 +61,7 @@ def dashboard():
 @main.route("/produtos")
 @login_required
 def produtos():
-    lista_produtos = Produto.query.all()
+    lista_produtos = Produto.query.order_by(Produto.id).all()
     return render_template('produtos.html', produtos=lista_produtos)
 
 @main.route("/produto/novo", methods=["GET", "POST"])
@@ -71,7 +71,7 @@ def gerenciar_produto(produto_id=None):
     produto = None
     if produto_id:
         produto = Produto.query.get_or_404(produto_id)
-
+            
     if request.method == 'POST':
         def to_float(value):
             if not value: return 0.0
@@ -85,18 +85,18 @@ def gerenciar_produto(produto_id=None):
         valor_fornecedor_real = to_float(request.form.get('valor_fornecedor_real'))
         desconto_fornecedor_percentual = to_float(request.form.get('desconto_fornecedor_percentual'))
         frete_real = to_float(request.form.get('frete_real'))
-
+        
         ipi_tipo = request.form.get('ipi_tipo')
         ipi_valor_form = to_float(request.form.get('ipi_valor'))
-
+        
         difal_percentual = to_float(request.form.get('difal_percentual'))
         imposto_venda_percentual = to_float(request.form.get('imposto_venda_percentual'))
 
         metodo_precificacao = request.form.get('metodo_precificacao')
         valor_metodo = to_float(request.form.get('valor_metodo'))
-
+        
         valor_compra_desconto = valor_fornecedor_real * (1 - (desconto_fornecedor_percentual / 100))
-
+        
         valor_ipi = 0.0
         if ipi_tipo == 'percentual':
             if ipi_valor_form > 0:
@@ -106,11 +106,11 @@ def gerenciar_produto(produto_id=None):
 
         base_calculo_difal = (valor_compra_desconto - valor_ipi) + frete_real
         valor_difal = base_calculo_difal * (difal_percentual / 100)
-
+        
         custo_total = valor_compra_desconto + frete_real + valor_difal
 
         preco_a_vista = 0.0
-
+        
         if metodo_precificacao == 'margem':
             margem_lucro_percentual = valor_metodo
             denominador = (1 - (imposto_venda_percentual / 100) - (margem_lucro_percentual / 100))
@@ -124,7 +124,7 @@ def gerenciar_produto(produto_id=None):
 
         valor_imposto_venda = preco_a_vista * (imposto_venda_percentual / 100)
         lucro_liquido_real = preco_a_vista - custo_total - valor_imposto_venda
-
+        
         if produto_id:
             produto.codigo = codigo
             produto.nome = nome
@@ -146,7 +146,7 @@ def gerenciar_produto(produto_id=None):
             )
             db.session.add(novo_produto)
             flash('Produto salvo com sucesso!', 'success')
-
+        
         db.session.commit()
         return redirect(url_for('main.produtos'))
 
@@ -182,7 +182,7 @@ def exportar_produtos_csv():
     output.headers["Content-Disposition"] = "attachment; filename=produtos.csv"
     output.headers["Content-type"] = "text/csv"
     return output
-
+    
 # --- ROTAS DE TAXAS ---
 
 @main.route("/taxas")
@@ -198,7 +198,7 @@ def gerenciar_taxa(taxa_id=None):
     taxa = None
     if taxa_id:
         taxa = TaxaPagamento.query.get_or_404(taxa_id)
-
+            
     if request.method == 'POST':
         def to_float(value):
             if not value: return 0.0
@@ -208,7 +208,7 @@ def gerenciar_taxa(taxa_id=None):
 
         metodo = request.form.get('metodo')
         taxa_percentual = to_float(request.form.get('taxa_percentual'))
-
+        
         coeficiente = 0.0
         if taxa_percentual >= 0 and taxa_percentual < 100:
             coeficiente = 1 - (taxa_percentual / 100)
@@ -226,7 +226,7 @@ def gerenciar_taxa(taxa_id=None):
             )
             db.session.add(nova_taxa)
             flash('Taxa adicionada com sucesso!', 'success')
-
+        
         db.session.commit()
         return redirect(url_for('main.taxas'))
 

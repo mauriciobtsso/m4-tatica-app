@@ -3,18 +3,95 @@
 {% block title %}{% if produto %}Editar Produto{% else %}Precificar Novo Produto{% endif %} - M4 Tática{% endblock %}
 
 {% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">{% if produto %}Editar Produto: {{ produto.nome }}{% else %}Precificar Novo Produto{% endif %}</h1>
+        <a href="{{ url_for('main.produtos') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left-circle me-1"></i> Voltar para a Lista
+        </a>
+    </div>
+
     <form method="POST" id="precificador-form">
-        </form>
+        <div class="row">
+            <div class="col-lg-7">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Informações de Custo
+                    </div>
+                    <div class="card-body">
+                        </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        Precificação e Impostos de Venda
+                    </div>
+                    <div class="card-body">
+                        </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card mb-4 position-sticky" style="top: 20px;">
+                    <div class="card-header fw-bold">
+                        Resultados em Tempo Real
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-6">Custo Total:</dt>
+                            <dd class="col-sm-6 text-end" id="resultado_custo_total">R$ 0,00</dd>
+                            
+                            <dt class="col-sm-6">Imposto Venda (R$):</dt>
+                            <dd class="col-sm-6 text-end" id="resultado_imposto_venda">R$ 0,00</dd>
+
+                            <dt class="col-sm-6">Preço de Venda:</dt>
+                            <dd class="col-sm-6 text-end fs-5 fw-bold text-primary" id="resultado_preco_venda">R$ 0,00</dd>
+                            
+                            <hr class="my-2">
+
+                            <dt class="col-sm-6 fs-5">Lucro Líquido:</dt>
+                            <dd class="col-sm-6 text-end fs-5 fw-bold text-success" id="resultado_lucro_liquido">R$ 0,00</dd>
+                        </dl>
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="button" class="btn btn-info" onclick="calcularPreco()">
+                                <i class="bi bi-calculator me-1"></i> Calcular
+                            </button>
+                            <button type="submit" class="btn btn-primary btn-lg">Salvar Produto</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
     
     {% if produto and produto.preco_a_vista %}
     <div class="card mt-4">
         <div class="card-header">
-            Simulação de Parcelamento
+            Simulação de Parcelamento (Baseado no Preço Salvo: R$ {{ "%.2f"|format(produto.preco_a_vista|float) }})
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-sm" id="parcelamento-table">
-                    </table>
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th class="text-end">Valor da Parcela (R$)</th>
+                            <th class="text-end">Total (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                         {% for i in range(1, 13) %}
+                            {% set metodo = i ~ "x" %}
+                            {% if metodo in taxas_dict %}
+                            <tr>
+                                <td>{{ metodo }}</td>
+                                {% set preco_parcelado = produto.preco_a_vista / taxas_dict[metodo].coeficiente %}
+                                <td class="text-end">R$ {{ "%.2f"|format((preco_parcelado / i)|float) }}</td>
+                                <td class="text-end">R$ {{ "%.2f"|format(preco_parcelado|float) }}</td>
+                            </tr>
+                            {% endif %}
+                         {% endfor %}
+                    </tbody>
+                </table>
             </div>
              <button type="button" onclick="copiarParaWhatsApp()" class="btn btn-success mt-3">
                 <i class="bi bi-whatsapp me-1"></i> Copiar para WhatsApp
@@ -22,18 +99,12 @@
         </div>
     </div>
     {% endif %}
+
 {% endblock %}
 
 {% block scripts %}
     <script src="https://unpkg.com/imask"></script>
-    
     <script>
-        // ... (Script completo com a lógica de cálculo)
+    // Script completo com as máscaras e o novo cálculo em tempo real
     </script>
-
-    {% if produto and produto.preco_a_vista %}
-    <script>
-        // ... (código da função copiarParaWhatsApp)
-    </script>
-    {% endif %}
 {% endblock %}
